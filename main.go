@@ -101,9 +101,9 @@ func buildMessage(client *slack.Client, commit Commit, commitStatus CommitStatus
 func buildUserMention(slackUser *slack.User, githubAuthorUsername string) (mention string) {
 	githubAuthorUrl := "https://github.com/" + githubAuthorUsername
 	if slackUser != nil {
-		mention += fmt.Sprintf("<@%s> ([%s](%s))", slackUser.ID, githubAuthorUsername, githubAuthorUrl)
+		mention += fmt.Sprintf("<@%s> (<%s|%s>)", slackUser.ID, githubAuthorUrl, githubAuthorUsername)
 	} else {
-		mention += fmt.Sprintf("[%s](%s)", githubAuthorUsername, githubAuthorUrl)
+		mention += fmt.Sprintf("<%s|%s>", githubAuthorUrl, githubAuthorUsername)
 	}
 	return mention
 }
