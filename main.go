@@ -15,6 +15,7 @@ import (
 
 const (
 	GitHubOrganization = "masmovil"
+	PublishJobName     = "mas-stack/publish:master"
 )
 
 type Commit struct {
@@ -40,7 +41,7 @@ func (o CommitStatus) Succeeded() bool {
 }
 
 func (o CommitStatus) Failed() bool {
-	return o.Conclusion == "failure"
+	return o.Conclusion == "failure" || o.Conclusion == "error"
 }
 
 // GithubUserSSO is used to unmarshall GitHub API response
@@ -68,9 +69,19 @@ func main() {
 	slackClient := getSlackClient()
 	commit := buildCommit()
 	commitStatus := buildCommitStatus()
-	message := buildMessage(slackClient, commit, commitStatus)
 
-	sendMessage(slackClient, message)
+	// Notify publish success to slack user via DM
+	if commitStatus.Name == PublishJobName {
+		message := buildSuccessPublishDirectMessage(commit, commitStatus)
+		sendMessageToUser(slackClient, commit.authorEmail, message)
+	}
+
+	// Notify failed job result to Slack channel
+	if commitStatus.Failed() {
+		message := buildFailedJobChannelMessage(slackClient, commit, commitStatus)
+		sendMessageToChannel(slackClient, os.Getenv("SLACK_CHANNEL_NAME"), message)
+	}
+
 	return
 }
 
@@ -80,7 +91,7 @@ func getSlackClient() (client *slack.Client) {
 	return client
 }
 
-func buildMessage(client *slack.Client, commit Commit, commitStatus CommitStatus) (message string) {
+func buildFailedJobChannelMessage(client *slack.Client, commit Commit, commitStatus CommitStatus) (message string) {
 	slackUser, err := client.GetUserByEmail(commit.authorEmail)
 	if err != nil {
 		fmt.Println("got error getting slack user by email, defaulting to nil:", err)
@@ -94,6 +105,28 @@ func buildMessage(client *slack.Client, commit Commit, commitStatus CommitStatus
 		userMention,
 		commitStatus.Url,
 		commitStatus.Name,
+	)
+	return
+}
+
+func buildSuccessPublishDirectMessage(commit Commit, commitStatus CommitStatus) (message string) {
+	statusEmoji := ":large_yellow_circle:"
+	statusDescription := "was aborted"
+	if commitStatus.Succeeded() {
+		statusEmoji = ":large_green_circle:"
+		statusDescription = "was successful"
+	} else if commitStatus.Failed() {
+		statusEmoji = ":red_circle:"
+		statusDescription = "failed"
+	}
+
+	message = fmt.Sprintf("%s The CI job <%s|%s> for <%s|\"_%s_\"> %s",
+		statusEmoji,
+		commitStatus.Url,
+		commitStatus.Name,
+		commit.url,
+		commit.getCommitMessageTitle(),
+		statusDescription,
 	)
 	return
 }
@@ -181,14 +214,28 @@ func getAuthorEmailFromGithubSSO(authorUsername string) (authorEmail string, err
 	return
 }
 
-func sendMessage(client *slack.Client, message string) {
-	slackChannel := os.Getenv("SLACK_CHANNEL_NAME")
-
+func sendMessageToChannel(client *slack.Client, slackChannel, message string) {
 	respChannel, respTimestamp, err := client.PostMessage(slackChannel, slack.MsgOptionText(message, false), slack.MsgOptionAsUser(true))
 	if err != nil {
-		fmt.Println("got error posting message to slack:", err)
+		fmt.Println("got error posting message to slack channel:", err)
 		return
 	}
-	fmt.Println("Message sent to channel", respChannel, "at", respTimestamp)
+	fmt.Println("message sent to channel", respChannel, "at", respTimestamp)
+	return
+}
+
+func sendMessageToUser(client *slack.Client, userEmail string, message string) {
+	slackUser, err := client.GetUserByEmail(userEmail)
+	if err != nil {
+		fmt.Println("got error getting slack user by email, aborting", err)
+		return
+	}
+
+	respChannel, respTimestamp, err := client.PostMessage(slackUser.ID, slack.MsgOptionText(message, false), slack.MsgOptionAsUser(true))
+	if err != nil {
+		fmt.Println("got error posting message to slack user:", err)
+		return
+	}
+	fmt.Println("message sent to user", respChannel, "at", respTimestamp)
 	return
 }
