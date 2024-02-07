@@ -1,0 +1,51 @@
+name: 'Slack Notify'
+description: 'Notify GitHub commit action results via Slack'
+inputs:
+  github-access-token:
+    description: 'Access token for GitHub, used to get commit author SSO email'
+    required: true
+  slack-access-token:
+    description: 'Access token for Slack, used to match commit emails to usernames'
+    required: true
+  slack-channel-name:
+    description: 'Slack channel name where the action will post messages'
+    required: true
+  commit-url:
+    description: 'Github commit URL'
+    required: true
+  commit-author-username:
+    description: 'Github commit author username'
+    required: true
+  commit-author-email:
+    description: 'Github commit author email'
+    required: true
+  commit-message:
+    description: 'Github commit message'
+    required: true
+  status-conclusion:
+    description: 'Github commit status conclusion'
+    required: true
+  status-url:
+    description: 'Github commit status URL'
+    required: true
+  status-name:
+    description: 'Github commit status name'
+    required: true
+  status-description:
+    description: 'Github commit status description'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.github-access-token }}
+    - ${{ inputs.slack-access-token }}
+    - ${{ inputs.slack-channel-name }}
+    - ${{ inputs.commit-url }}
+    - ${{ inputs.commit-author-username }}
+    - ${{ inputs.commit-author-email }}
+    - ${{ inputs.commit-message }}
+    - ${{ inputs.status-conclusion }}
+    - ${{ inputs.status-url }}
+    - ${{ inputs.status-name }}
+    - ${{ inputs.status-description }}
