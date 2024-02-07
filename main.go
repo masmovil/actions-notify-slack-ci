@@ -70,7 +70,7 @@ func main() {
 	commit := buildCommit()
 	commitStatus := buildCommitStatus()
 
-	// Notify publish success to slack user via DM
+	// Notify publish success to slack user via direct message
 	if commitStatus.Name == PublishJobName {
 		message := buildSuccessPublishDirectMessage(commit, commitStatus)
 		sendMessageToUser(slackClient, commit.authorEmail, message)
@@ -230,6 +230,8 @@ func sendMessageToUser(client *slack.Client, userEmail string, message string) {
 		fmt.Println("got error getting slack user by email, aborting", err)
 		return
 	}
+
+	fmt.Println("sending message:", message)
 
 	respChannel, respTimestamp, err := client.PostMessage(slackUser.ID, slack.MsgOptionText(message, false), slack.MsgOptionAsUser(true))
 	if err != nil {
