@@ -215,7 +215,10 @@ func getAuthorEmailFromGithubSSO(authorUsername string) (authorEmail string, err
 }
 
 func sendMessageToChannel(client *slack.Client, slackChannel, message string) {
-	respChannel, respTimestamp, err := client.PostMessage(slackChannel, slack.MsgOptionText(message, false), slack.MsgOptionAsUser(true))
+	respChannel, respTimestamp, err := client.PostMessage(slackChannel,
+		slack.MsgOptionText(message, false),
+		slack.MsgOptionAsUser(true),
+		slack.MsgOptionDisableLinkUnfurl())
 	if err != nil {
 		fmt.Println("got error posting message to slack channel:", err)
 		return
