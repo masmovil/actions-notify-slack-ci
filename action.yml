@@ -40,6 +40,8 @@ inputs:
 outputs:
   slack_message_id:
     description: 'The Slack message timestamp (ID) of the message sent. Can be used in subsequent GitHub Actions steps.'
+  slack_channel_id:
+    description: 'The Slack channel ID where the message was sent. Can be used in subsequent GitHub Actions steps.'
 runs:
   using: 'docker'
   image: 'Dockerfile'

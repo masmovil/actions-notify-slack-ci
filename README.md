@@ -31,4 +31,5 @@ with:
 # You can now use the output in subsequent steps:
 # outputs:
 #   slack_message_id: ${{ steps.notify-slack.outputs.slack_message_id }}
+#   slack_channel_id: ${{ steps.notify-slack.outputs.slack_channel_id }}
 ```

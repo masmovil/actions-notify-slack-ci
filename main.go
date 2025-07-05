@@ -234,6 +234,8 @@ func sendMessageToChannel(client *slack.Client, slackChannel, message string) {
 
 	// Output the Slack message timestamp as the message ID for GitHub Actions
 	fmt.Printf("::set-output name=slack_message_id::%s\n", respTimestamp)
+	fmt.Printf("::set-output name=slack_channel_id::%s\n", respChannel)
+
 	return
 }
 
@@ -255,5 +257,6 @@ func sendMessageToUser(client *slack.Client, userEmail string, message string) {
 
 	// Output the Slack message timestamp as the message ID for GitHub Actions
 	fmt.Printf("::set-output name=slack_message_id::%s\n", respTimestamp)
+	fmt.Printf("::set-output name=slack_channel_id::%s\n", respChannel)
 	return
 }
