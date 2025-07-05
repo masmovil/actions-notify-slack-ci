@@ -64,22 +64,27 @@ type GithubUserSSO struct {
 }
 
 func main() {
-	fmt.Println("Running actions-notify-slack")
+	fmt.Println("Running actions-notify-slack-ci")
 
 	slackClient := getSlackClient()
 	commit := buildCommit()
 	commitStatus := buildCommitStatus()
+	mustSendChannelMessage := os.Getenv("SEND_MESSAGE_TO_CHANNEL") != "null"
+	slackChannelName := os.Getenv("SEND_MESSAGE_TO_CHANNEL")
+	mustSendDirectMessage := os.Getenv("SEND_MESSAGE_TO_USER") == "true"
 
-	// Notify publish success to slack user via direct message
-	if commitStatus.Name == PublishJobName {
-		message := buildSuccessPublishDirectMessage(commit, commitStatus)
-		sendMessageToUser(slackClient, commit.authorEmail, message)
+	// Notify job result to Slack channel
+	if mustSendChannelMessage {
+		fmt.Println("Sending message to channel", slackChannelName)
+		message := buildFailedJobChannelMessage(slackClient, commit, commitStatus)
+		sendMessageToChannel(slackClient, slackChannelName, message)
 	}
 
-	// Notify failed job result to Slack channel
-	if commitStatus.Failed() {
-		message := buildFailedJobChannelMessage(slackClient, commit, commitStatus)
-		sendMessageToChannel(slackClient, os.Getenv("SLACK_CHANNEL_NAME"), message)
+	// Notify job result to Slack user via direct message
+	if mustSendDirectMessage {
+		fmt.Println("Sending message to user", commit.authorEmail)
+		message := buildSuccessPublishDirectMessage(commit, commitStatus)
+		sendMessageToUser(slackClient, commit.authorEmail, message)
 	}
 
 	return
@@ -110,14 +115,16 @@ func buildFailedJobChannelMessage(client *slack.Client, commit Commit, commitSta
 }
 
 func buildSuccessPublishDirectMessage(commit Commit, commitStatus CommitStatus) (message string) {
-	statusEmoji := ":large_yellow_circle:"
-	statusDescription := "was aborted"
+	var statusEmoji string
+	var statusDescription string
 	if commitStatus.Succeeded() {
 		statusEmoji = ":large_green_circle:"
 		statusDescription = "was successful"
 	} else if commitStatus.Failed() {
 		statusEmoji = ":red_circle:"
 		statusDescription = "failed"
+	} else {
+		fmt.Println("got unknown commit status:", commitStatus.Conclusion)
 	}
 
 	message = fmt.Sprintf("%s The CI job <%s|%s> for <%s|\"_%s_\"> %s",
@@ -224,6 +231,9 @@ func sendMessageToChannel(client *slack.Client, slackChannel, message string) {
 		return
 	}
 	fmt.Println("message sent to channel", respChannel, "at", respTimestamp)
+
+	// Output the Slack message timestamp as the message ID for GitHub Actions
+	fmt.Printf("::set-output name=slack_message_id::%s\n", respTimestamp)
 	return
 }
 
@@ -242,5 +252,8 @@ func sendMessageToUser(client *slack.Client, userEmail string, message string) {
 		return
 	}
 	fmt.Println("message sent to user", respChannel, "at", respTimestamp)
+
+	// Output the Slack message timestamp as the message ID for GitHub Actions
+	fmt.Printf("::set-output name=slack_message_id::%s\n", respTimestamp)
 	return
 }
