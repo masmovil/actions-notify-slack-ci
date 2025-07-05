@@ -7,8 +7,11 @@ inputs:
   slack-access-token:
     description: 'Access token for Slack, used to match commit emails to usernames'
     required: true
-  slack-channel-name:
-    description: 'Slack channel name where the action will post messages'
+  send-message-to-channel:
+    description: 'Slack channel name where the action will post messages, or null'
+    required: true
+  send-message-to-user:
+    description: 'Whether to send a direct message to the user (true/false)'
     required: true
   commit-url:
     description: 'Github commit URL'
@@ -34,13 +37,17 @@ inputs:
   status-description:
     description: 'Github commit status description'
     required: true
+outputs:
+  slack_message_id:
+    description: 'The Slack message timestamp (ID) of the message sent. Can be used in subsequent GitHub Actions steps.'
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
     - ${{ inputs.github-access-token }}
     - ${{ inputs.slack-access-token }}
-    - ${{ inputs.slack-channel-name }}
+    - ${{ inputs.send-message-to-channel }}
+    - ${{ inputs.send-message-to-user }}
     - ${{ inputs.commit-url }}
     - ${{ inputs.commit-author-username }}
     - ${{ inputs.commit-author-email }}
