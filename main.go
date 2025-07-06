@@ -232,9 +232,20 @@ func sendMessageToChannel(client *slack.Client, slackChannel, message string) {
 	}
 	fmt.Println("message sent to channel", respChannel, "at", respTimestamp)
 
-	// Output the Slack message timestamp as the message ID for GitHub Actions
-	fmt.Printf("::set-output name=slack_message_id::%s\n", respTimestamp)
-	fmt.Printf("::set-output name=slack_channel_id::%s\n", respChannel)
+	// Output the Slack message timestamp and channel ID for GitHub Actions
+	githubOutput := os.Getenv("GITHUB_OUTPUT")
+	if githubOutput != "" {
+		f, err := os.OpenFile(githubOutput, os.O_APPEND|os.O_WRONLY, 0600)
+		if err == nil {
+			defer f.Close()
+			fmt.Fprintf(f, "slack_message_id=%s\n", respTimestamp)
+			fmt.Fprintf(f, "slack_channel_id=%s\n", respChannel)
+		} else {
+			fmt.Printf("could not write outputs to $GITHUB_OUTPUT: %v\n", err)
+		}
+	} else {
+		fmt.Println("no $GITHUB_OUTPUT environment variable set, skipping output writing")
+	}
 
 	return
 }
@@ -255,8 +266,19 @@ func sendMessageToUser(client *slack.Client, userEmail string, message string) {
 	}
 	fmt.Println("message sent to user", respChannel, "at", respTimestamp)
 
-	// Output the Slack message timestamp as the message ID for GitHub Actions
-	fmt.Printf("::set-output name=slack_message_id::%s\n", respTimestamp)
-	fmt.Printf("::set-output name=slack_channel_id::%s\n", respChannel)
+	// Output the Slack message timestamp and channel ID for GitHub Actions
+	githubOutput := os.Getenv("GITHUB_OUTPUT")
+	if githubOutput != "" {
+		f, err := os.OpenFile(githubOutput, os.O_APPEND|os.O_WRONLY, 0600)
+		if err == nil {
+			defer f.Close()
+			fmt.Fprintf(f, "slack_message_id=%s\n", respTimestamp)
+			fmt.Fprintf(f, "slack_channel_id=%s\n", respChannel)
+		} else {
+			fmt.Printf("could not write outputs to $GITHUB_OUTPUT: %v\n", err)
+		}
+	} else {
+		fmt.Println("no $GITHUB_OUTPUT environment variable set, skipping output writing")
+	}
 	return
 }
