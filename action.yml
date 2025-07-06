@@ -38,6 +38,7 @@ inputs:
     description: 'Github commit status description'
     required: true
 outputs:
+  # WARNING: If both messages are sent (to user and to channel), only the last one (to channel) will be outputted to GitHub Actions
   slack_message_id:
     description: 'The Slack message timestamp (ID) of the message sent. Can be used in subsequent GitHub Actions steps.'
   slack_channel_id:

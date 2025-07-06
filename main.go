@@ -73,6 +73,13 @@ func main() {
 	slackChannelName := os.Getenv("SEND_MESSAGE_TO_CHANNEL")
 	mustSendDirectMessage := os.Getenv("SEND_MESSAGE_TO_USER") == "true"
 
+	// Notify job result to Slack user via direct message
+	if mustSendDirectMessage {
+		fmt.Println("Sending message to user", commit.authorEmail)
+		message := buildSuccessPublishDirectMessage(commit, commitStatus)
+		sendMessageToUser(slackClient, commit.authorEmail, message)
+	}
+
 	// Notify job result to Slack channel
 	if mustSendChannelMessage {
 		fmt.Println("Sending message to channel", slackChannelName)
@@ -80,11 +87,8 @@ func main() {
 		sendMessageToChannel(slackClient, slackChannelName, message)
 	}
 
-	// Notify job result to Slack user via direct message
-	if mustSendDirectMessage {
-		fmt.Println("Sending message to user", commit.authorEmail)
-		message := buildSuccessPublishDirectMessage(commit, commitStatus)
-		sendMessageToUser(slackClient, commit.authorEmail, message)
+	if mustSendDirectMessage && mustSendChannelMessage {
+		fmt.Println("WARNING: Both direct message and channel message will be sent, but only the last one will be outputted to GitHub Actions")
 	}
 
 	return
