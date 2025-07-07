@@ -15,7 +15,6 @@ import (
 
 const (
 	GitHubOrganization = "masmovil"
-	PublishJobName     = "mas-stack/publish:master"
 )
 
 type Commit struct {
