@@ -45,7 +45,7 @@ outputs:
     description: 'The Slack channel ID where the message was sent. Can be used in subsequent GitHub Actions steps.'
 runs:
   using: 'docker'
-  image: 'docker://europe-docker.pkg.dev/mm-swe-prod/container-images/actions-notify-slack-ci:a24f7df'
+  image: 'Dockerfile'
   args:
     - ${{ inputs.github-access-token }}
     - ${{ inputs.slack-access-token }}
