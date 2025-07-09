@@ -65,6 +65,16 @@ type GithubUserSSO struct {
 func main() {
 	fmt.Println("Running actions-notify-slack-ci")
 
+	// Check if required environment variables are set
+	if os.Getenv("SLACK_ACCESS_TOKEN") == "" {
+		fmt.Println("Error: SLACK_ACCESS_TOKEN environment variable is not set")
+		os.Exit(1)
+	}
+	if os.Getenv("GITHUB_ACCESS_TOKEN") == "" {
+		fmt.Println("Error: GITHUB_ACCESS_TOKEN environment variable is not set")
+		os.Exit(1)
+	}
+
 	slackClient := getSlackClient()
 	commit := buildCommit()
 	commitStatus := buildCommitStatus()
