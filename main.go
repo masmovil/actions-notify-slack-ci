@@ -248,6 +248,17 @@ func sendMessageToChannel(client *slack.Client, slackChannel, message string) {
 	// Output the Slack message timestamp and channel ID for GitHub Actions
 	githubOutput := os.Getenv("GITHUB_OUTPUT")
 	if githubOutput != "" {
+		// Debugging code to verify githubOutput
+		fmt.Printf("DEBUG: $GITHUB_OUTPUT value: %s\n", githubOutput)
+
+		// Check if githubOutput is a valid file
+		fileInfo, err := os.Stat(githubOutput)
+		if err != nil {
+			fmt.Printf("DEBUG: Error checking $GITHUB_OUTPUT: %v\n", err)
+		} else {
+			fmt.Printf("DEBUG: $GITHUB_OUTPUT is a %s\n", fileInfo.Mode().Type())
+		}
+
 		f, err := os.OpenFile(githubOutput, os.O_APPEND|os.O_WRONLY, 0600)
 		if err == nil {
 			defer f.Close()
@@ -282,6 +293,17 @@ func sendMessageToUser(client *slack.Client, userEmail string, message string) {
 	// Output the Slack message timestamp and channel ID for GitHub Actions
 	githubOutput := os.Getenv("GITHUB_OUTPUT")
 	if githubOutput != "" {
+		// Debugging code to verify githubOutput
+		fmt.Printf("DEBUG: $GITHUB_OUTPUT value: %s\n", githubOutput)
+
+		// Check if githubOutput is a valid file
+		fileInfo, err := os.Stat(githubOutput)
+		if err != nil {
+			fmt.Printf("DEBUG: Error checking $GITHUB_OUTPUT: %v\n", err)
+		} else {
+			fmt.Printf("DEBUG: $GITHUB_OUTPUT is a %s\n", fileInfo.Mode().Type())
+		}
+
 		f, err := os.OpenFile(githubOutput, os.O_APPEND|os.O_WRONLY, 0600)
 		if err == nil {
 			defer f.Close()
