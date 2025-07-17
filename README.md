@@ -222,3 +222,36 @@ npm test
 
 **Without `.env` file**: Uses safe fallback values for basic functionality testing.
 **With `.env` file**: Uses your real tokens for full integration testing (but with mocked APIs for safety).
+
+## Development
+
+This action is written in TypeScript and needs to be built before it can be used in GitHub Actions.
+
+### Building the Action
+
+The action uses `@vercel/ncc` to bundle all dependencies into a single JavaScript file:
+
+```bash
+# Install dependencies
+npm install
+
+# Build TypeScript and bundle dependencies
+npm run build
+
+# Or just bundle without TypeScript compilation
+npm run package
+```
+
+### Important Notes
+
+- The `dist/` directory contains the bundled JavaScript file and **must be committed** to git
+- GitHub Actions runs the bundled `dist/index.js` file, not the source `main.ts`
+- After making changes to the source code, always run `npm run build` before committing
+- The `node_modules` directory is ignored by git since dependencies are bundled
+
+### Release Process
+
+1. Make your changes to `main.ts`
+2. Run `npm run build` to create the bundled version
+3. Commit both source changes and the updated `dist/index.js`
+4. Create a new release/tag

@@ -49,4 +49,4 @@ outputs:
     description: 'The Slack user ID who received the direct message'
 runs:
   using: 'node20'
-  main: 'main.js'
+  main: 'dist/index.js'
