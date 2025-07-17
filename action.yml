@@ -1,61 +1,36 @@
 name: 'Slack Notify'
 description: 'Notify GitHub commit action results via Slack'
 inputs:
-  github-access-token:
+  github_token:
     description: 'Access token for GitHub, used to get commit author SSO email'
     required: true
-  slack-access-token:
+  slack_token:
     description: 'Access token for Slack, used to match commit emails to usernames'
     required: true
-  send-message-to-channel:
-    description: 'Slack channel name where the action will post messages, or null'
+  slack_channel:
+    description: 'Slack channel name where the action will post messages'
+    required: false
+  slack_user:
+    description: 'Slack user email or identifier to send direct message to'
+    required: false
+  slack_message:
+    description: 'Message to send to Slack'
     required: true
-  send-message-to-user:
-    description: 'Whether to send a direct message to the user (true/false)'
-    required: true
-  commit-url:
-    description: 'Github commit URL'
-    required: true
-  commit-author-username:
-    description: 'Github commit author username'
-    required: true
-  commit-author-email:
-    description: 'Github commit author email'
-    required: true
-  commit-message:
-    description: 'Github commit message'
-    required: true
-  status-conclusion:
-    description: 'Github commit status conclusion'
-    required: true
-  status-url:
-    description: 'Github commit status URL'
-    required: true
-  status-name:
-    description: 'Github commit status name'
-    required: true
-  status-description:
-    description: 'Github commit status description'
-    required: true
+  github_org:
+    description: 'GitHub organization name (optional, used for SAML identity resolution)'
+    required: false
+  github_username:
+    description: 'GitHub username (optional, used for SAML identity resolution)'
+    required: false
 outputs:
-  # WARNING: If both messages are sent (to user and to channel), only the last one (to channel) will be outputted to GitHub Actions
-  slack_message_id:
-    description: 'The Slack message timestamp (ID) of the message sent. Can be used in subsequent GitHub Actions steps.'
-  slack_channel_id:
-    description: 'The Slack channel ID where the message was sent. Can be used in subsequent GitHub Actions steps.'
+  channel_slack_message_id:
+    description: 'The Slack message timestamp (ID) of the message sent to channel'
+  channel_slack_channel_id:
+    description: 'The Slack channel ID where the message was sent'
+  direct_slack_message_id:
+    description: 'The Slack message timestamp (ID) of the direct message sent to user'
+  direct_slack_user_id:
+    description: 'The Slack user ID who received the direct message'
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  args:
-    - ${{ inputs.github-access-token }}
-    - ${{ inputs.slack-access-token }}
-    - ${{ inputs.send-message-to-channel }}
-    - ${{ inputs.send-message-to-user }}
-    - ${{ inputs.commit-url }}
-    - ${{ inputs.commit-author-username }}
-    - ${{ inputs.commit-author-email }}
-    - ${{ inputs.commit-message }}
-    - ${{ inputs.status-conclusion }}
-    - ${{ inputs.status-url }}
-    - ${{ inputs.status-name }}
-    - ${{ inputs.status-description }}
+  using: 'node20'
+  main: 'main.js'
