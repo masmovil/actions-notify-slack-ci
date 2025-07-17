@@ -129,19 +129,19 @@ function buildSuccessPublishDirectMessage(commit: Commit, commitStatus: CommitSt
 
 function buildCommit(): Commit {
   return {
-    url: process.env.COMMIT_URL || '',
-    authorUsername: process.env.COMMIT_AUTHOR_USERNAME || '',
-    authorEmail: process.env.COMMIT_AUTHOR_EMAIL || '',
-    commitMessage: process.env.COMMIT_MESSAGE || ''
+    url: core.getInput('commit_url', { required: true }),
+    authorUsername: core.getInput('commit_author_username', { required: true }),
+    authorEmail: core.getInput('commit_author_email', { required: true }),
+    commitMessage: core.getInput('commit_message', { required: true })
   };
 }
 
 function buildCommitStatus(): CommitStatus {
   return {
-    name: process.env.STATUS_NAME || '',
-    description: process.env.STATUS_DESCRIPTION || '',
-    conclusion: process.env.STATUS_CONCLUSION || '',
-    url: process.env.STATUS_URL || ''
+    name: core.getInput('status_name', { required: true }),
+    description: core.getInput('status_description', { required: true }),
+    conclusion: core.getInput('status_conclusion', { required: true }),
+    url: core.getInput('status_url', { required: true })
   };
 }
 
@@ -218,32 +218,36 @@ async function run(): Promise<void> {
   try {
     core.info('ℹ️ Running actions-notify-slack-ci');
 
-    // Check if required environment variables are set
-    if (!process.env.SLACK_ACCESS_TOKEN) {
-      core.setFailed('❌ Error: SLACK_ACCESS_TOKEN environment variable is not set');
+    // Check if required inputs are set
+    const slackAccessToken = core.getInput('slack_access_token', { required: true });
+    const githubAccessToken = core.getInput('github_access_token', { required: true });
+
+    if (!slackAccessToken) {
+      core.setFailed('❌ Error: slack_access_token input is not set');
       return;
     }
-    if (!process.env.GITHUB_ACCESS_TOKEN) {
-      core.setFailed('❌ Error: GITHUB_ACCESS_TOKEN environment variable is not set');
+    if (!githubAccessToken) {
+      core.setFailed('❌ Error: github_access_token input is not set');
       return;
     }
 
     // Create a Slack client using the provided token
-    const slackClient = new WebClient(process.env.SLACK_ACCESS_TOKEN);
+    const slackClient = new WebClient(slackAccessToken);
 
     // Build commit and status information
     const commit = buildCommit();
     const commitStatus = buildCommitStatus();
 
     // Determine if we should send messages
-    const mustSendChannelMessage = process.env.SEND_MESSAGE_TO_CHANNEL !== 'null';
-    const slackChannelName = process.env.SEND_MESSAGE_TO_CHANNEL;
-    const mustSendDirectMessage = process.env.SEND_MESSAGE_TO_USER === 'true';
+    const sendMessageToChannelInput = core.getInput('send_message_to_channel');
+    const mustSendChannelMessage = sendMessageToChannelInput !== 'null' && sendMessageToChannelInput !== '';
+    const slackChannelName = sendMessageToChannelInput;
+    const mustSendDirectMessage = core.getInput('send_message_to_user') === 'true';
 
     // Try to get author email from GitHub SSO if possible
     if (commit.authorUsername) {
       try {
-        const authorEmail = await getGithubAuthorEmail('masmovil', commit.authorUsername, process.env.GITHUB_ACCESS_TOKEN);
+        const authorEmail = await getGithubAuthorEmail('masmovil', commit.authorUsername, githubAccessToken);
         commit.authorEmail = authorEmail;
         core.info(`ℹ️ Resolved GitHub SAML email: ${authorEmail}`);
       } catch (err: any) {
@@ -267,8 +271,8 @@ async function run(): Promise<void> {
       }
     }
 
-    // Notify job result to Slack channel
-    if (mustSendChannelMessage && slackChannelName) {
+    // Notify job result to Slack channel only if the job failed
+    if (mustSendChannelMessage && slackChannelName && commitStatusFailed(commitStatus.conclusion)) {
       core.info(`ℹ️ Sending message to channel ${slackChannelName}`);
       const message = await buildFailedJobChannelMessage(slackClient, commit, commitStatus);
       try {

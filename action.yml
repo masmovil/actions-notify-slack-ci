@@ -1,27 +1,43 @@
 name: 'Slack Notify'
 description: 'Notify GitHub commit action results via Slack'
 inputs:
-  github_token:
-    description: 'Access token for GitHub, used to get commit author SSO email'
+  slack_access_token:
+    description: 'Slack Bot Token (starts with xoxb-) for posting messages'
     required: true
-  slack_token:
-    description: 'Access token for Slack, used to match commit emails to usernames'
+  github_access_token:
+    description: 'GitHub Personal Access Token for GraphQL API access'
     required: true
-  slack_channel:
-    description: 'Slack channel name where the action will post messages'
+  send_message_to_channel:
+    description: 'Slack channel name (with #) or set to null to disable'
     required: false
-  slack_user:
-    description: 'Slack user email or identifier to send direct message to'
+  send_message_to_user:
+    description: 'Set to true to send direct messages, false to disable'
     required: false
-  slack_message:
-    description: 'Message to send to Slack'
+    default: 'false'
+  commit_url:
+    description: 'URL to the commit'
     required: true
-  github_org:
-    description: 'GitHub organization name (optional, used for SAML identity resolution)'
-    required: false
-  github_username:
-    description: 'GitHub username (optional, used for SAML identity resolution)'
-    required: false
+  commit_author_username:
+    description: 'GitHub username of commit author'
+    required: true
+  commit_author_email:
+    description: 'Email of commit author'
+    required: true
+  commit_message:
+    description: 'The commit message'
+    required: true
+  status_name:
+    description: 'Name of the CI/CD job or check'
+    required: true
+  status_description:
+    description: 'Description of the status'
+    required: true
+  status_conclusion:
+    description: 'Result of the status check (success, failure, error)'
+    required: true
+  status_url:
+    description: 'URL to the CI/CD job details'
+    required: true
 outputs:
   channel_slack_message_id:
     description: 'The Slack message timestamp (ID) of the message sent to channel'
