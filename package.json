@@ -1,0 +1,21 @@
+{
+  "name": "actions-notify-slack-ci",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "build": "tsc",
+    "test:local": "node test-local.js",
+    "test:env": "node test-with-env.js"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "@slack/web-api": "^6.8.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/node-fetch": "^2.6.0",
+    "typescript": "^4.9.0"
+  }
+}
