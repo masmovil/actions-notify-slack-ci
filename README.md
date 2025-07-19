@@ -20,33 +20,33 @@ This action uses standard GitHub Actions inputs:
 
 | Input | Description |
 |-------|-------------|
-| `slack_access_token` | Slack Bot Token (starts with `xoxb-`) for posting messages |
-| `github_access_token` | GitHub Personal Access Token for GraphQL API access |
+| `slack-access-token` | Slack Bot Token (starts with `xoxb-`) for posting messages |
+| `github-access-token` | GitHub Personal Access Token for GraphQL API access |
 
 ### Message Configuration
 
 | Input | Description | Example |
 |-------|-------------|---------|
-| `send_message_to_channel` | Slack channel name (with #) or set to `null` to disable | `#ci-notifications` |
-| `send_message_to_user` | Set to `true` to send direct messages, `false` to disable | `true` |
+| `send-message-to-channel` | Slack channel name (with #) or set to `null` to disable | `#ci-notifications` |
+| `send-message-to-user` | Set to `true` to send direct messages, `false` to disable | `true` |
 
 ### Commit Information
 
 | Input | Description | Source |
 |-------|-------------|--------|
-| `commit_url` | URL to the commit | `${{ github.event.head_commit.url }}` |
-| `commit_author_username` | GitHub username of commit author | `${{ github.event.head_commit.author.username }}` |
-| `commit_author_email` | Email of commit author | `${{ github.event.head_commit.author.email }}` |
-| `commit_message` | The commit message | `${{ github.event.head_commit.message }}` |
+| `commit-url` | URL to the commit | `${{ github.event.head_commit.url }}` |
+| `commit-author-username` | GitHub username of commit author | `${{ github.event.head_commit.author.username }}` |
+| `commit-author-email` | Email of commit author | `${{ github.event.head_commit.author.email }}` |
+| `commit-message` | The commit message | `${{ github.event.head_commit.message }}` |
 
 ### Status Information
 
 | Input | Description | Values |
 |-------|-------------|--------|
-| `status_name` | Name of the CI/CD job or check | `build`, `test`, `deploy` |
-| `status_description` | Description of the status | Any descriptive text |
-| `status_conclusion` | Result of the status check | `success`, `failure`, `error` |
-| `status_url` | URL to the CI/CD job details | Link to job logs or dashboard |
+| `status-name` | Name of the CI/CD job or check | `build`, `test`, `deploy` |
+| `status-description` | Description of the status | Any descriptive text |
+| `status-conclusion` | Result of the status check | `success`, `failure`, `error` |
+| `status-url` | URL to the CI/CD job details | Link to job logs or dashboard |
 
 ## Outputs
 
@@ -54,10 +54,10 @@ The action provides the following outputs for use in subsequent steps:
 
 | Output | Description |
 |--------|-------------|
-| `channel_slack_message_id` | Slack message timestamp (ID) for channel message |
-| `channel_slack_channel_id` | Slack channel ID where message was sent |
-| `direct_slack_message_id` | Slack message timestamp (ID) for direct message |
-| `direct_slack_user_id` | Slack user ID who received the direct message |
+| `channel-slack-message-id` | Slack message timestamp (ID) for channel message |
+| `channel-slack-channel-id` | Slack channel ID where message was sent |
+| `direct-slack-message-id` | Slack message timestamp (ID) for direct message |
+| `direct-slack-user-id` | Slack user ID who received the direct message |
 
 ## Message Types
 
@@ -79,18 +79,18 @@ The action provides the following outputs for use in subsequent steps:
 - name: Notify Slack
   uses: masmovil/actions-notify-slack-ci@v1
   with:
-    slack_access_token: ${{ secrets.SLACK_ACCESS_TOKEN }}
-    github_access_token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
-    send_message_to_channel: "#ci-notifications"
-    send_message_to_user: "true"
-    commit_url: ${{ github.event.head_commit.url }}
-    commit_author_username: ${{ github.event.head_commit.author.username }}
-    commit_author_email: ${{ github.event.head_commit.author.email }}
-    commit_message: ${{ github.event.head_commit.message }}
-    status_name: "build"
-    status_description: "Build and test"
-    status_conclusion: ${{ job.status }}
-    status_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    slack-access-token: ${{ secrets.SLACK_ACCESS_TOKEN }}
+    github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
+    send-message-to-channel: "#ci-notifications"
+    send-message-to-user: "true"
+    commit-url: ${{ github.event.head_commit.url }}
+    commit-author-username: ${{ github.event.head_commit.author.username }}
+    commit-author-email: ${{ github.event.head_commit.author.email }}
+    commit-message: ${{ github.event.head_commit.message }}
+    status-name: "build"
+    status-description: "Build and test"
+    status-conclusion: ${{ job.status }}
+    status-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 ```
 
 ### Advanced Usage with Status Context
@@ -100,23 +100,23 @@ The action provides the following outputs for use in subsequent steps:
   if: failure()
   uses: masmovil/actions-notify-slack-ci@v1
   with:
-    slack_access_token: ${{ secrets.SLACK_ACCESS_TOKEN }}
-    github_access_token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
-    send_message_to_channel: "#build-failures"
-    send_message_to_user: "true"
-    commit_url: ${{ github.event.head_commit.url }}
-    commit_author_username: ${{ github.event.head_commit.author.username }}
-    commit_author_email: ${{ github.event.head_commit.author.email }}
-    commit_message: ${{ github.event.head_commit.message }}
-    status_name: ${{ github.job }}
-    status_description: "Job failed in ${{ github.workflow }}"
-    status_conclusion: "failure"
-    status_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    slack-access-token: ${{ secrets.SLACK_ACCESS_TOKEN }}
+    github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
+    send-message-to-channel: "#build-failures"
+    send-message-to-user: "true"
+    commit-url: ${{ github.event.head_commit.url }}
+    commit-author-username: ${{ github.event.head_commit.author.username }}
+    commit-author-email: ${{ github.event.head_commit.author.email }}
+    commit-message: ${{ github.event.head_commit.message }}
+    status-name: ${{ github.job }}
+    status-description: "Job failed in ${{ github.workflow }}"
+    status-conclusion: "failure"
+    status-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
 - name: Use Slack outputs
   run: |
-    echo "Channel message ID: ${{ steps.notify-slack.outputs.channel_slack_message_id }}"
-    echo "User message ID: ${{ steps.notify-slack.outputs.direct_slack_message_id }}"
+    echo "Channel message ID: ${{ steps.notify-slack.outputs.channel-slack-message-id }}"
+    echo "User message ID: ${{ steps.notify-slack.outputs.direct-slack-message-id }}"
 ```
 
 ### Channel-Only Notification
@@ -125,10 +125,10 @@ The action provides the following outputs for use in subsequent steps:
 - name: Notify Channel Only
   uses: masmovil/actions-notify-slack-ci@v1
   with:
-    slack_access_token: ${{ secrets.SLACK_ACCESS_TOKEN }}
-    github_access_token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
-    send_message_to_channel: "#deployments"
-    send_message_to_user: "false"
+    slack-access-token: ${{ secrets.SLACK_ACCESS_TOKEN }}
+    github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
+    send-message-to-channel: "#deployments"
+    send-message-to-user: "false"
     # ... other inputs
 ```
 
@@ -138,10 +138,10 @@ The action provides the following outputs for use in subsequent steps:
 - name: Notify User Only
   uses: masmovil/actions-notify-slack-ci@v1
   with:
-    slack_access_token: ${{ secrets.SLACK_ACCESS_TOKEN }}
-    github_access_token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
-    send_message_to_channel: "null"
-    send_message_to_user: "true"
+    slack-access-token: ${{ secrets.SLACK_ACCESS_TOKEN }}
+    github-access-token: ${{ secrets.GITHUB_ACCESS_TOKEN }}
+    send-message-to-channel: "null"
+    send-message-to-user: "true"
     # ... other inputs
 ```
 

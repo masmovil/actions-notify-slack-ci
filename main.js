@@ -115,18 +115,18 @@ function buildSuccessPublishDirectMessage(commit, commitStatus) {
 }
 function buildCommit() {
     return {
-        url: core.getInput('commit_url', { required: true }),
-        authorUsername: core.getInput('commit_author_username', { required: true }),
-        authorEmail: core.getInput('commit_author_email', { required: true }),
-        commitMessage: core.getInput('commit_message', { required: true })
+        url: core.getInput('commit-url', { required: true }),
+        authorUsername: core.getInput('commit-author-username', { required: true }),
+        authorEmail: core.getInput('commit-author-email', { required: true }),
+        commitMessage: core.getInput('commit-message', { required: true })
     };
 }
 function buildCommitStatus() {
     return {
-        name: core.getInput('status_name', { required: true }),
-        description: core.getInput('status_description', { required: true }),
-        conclusion: core.getInput('status_conclusion', { required: true }),
-        url: core.getInput('status_url', { required: true })
+        name: core.getInput('status-name', { required: true }),
+        description: core.getInput('status-description', { required: true }),
+        conclusion: core.getInput('status-conclusion', { required: true }),
+        url: core.getInput('status-url', { required: true })
     };
 }
 async function sendMessageToChannel(slackClient, channel, message) {
@@ -200,14 +200,14 @@ async function run() {
     try {
         core.info('ℹ️ Running actions-notify-slack-ci');
         // Check if required inputs are set
-        const slackAccessToken = core.getInput('slack_access_token', { required: true });
-        const githubAccessToken = core.getInput('github_access_token', { required: true });
+        const slackAccessToken = core.getInput('slack-access-token', { required: true });
+        const githubAccessToken = core.getInput('github-access-token', { required: true });
         if (!slackAccessToken) {
-            core.setFailed('❌ Error: slack_access_token input is not set');
+            core.setFailed('❌ Error: slack-access-token input is not set');
             return;
         }
         if (!githubAccessToken) {
-            core.setFailed('❌ Error: github_access_token input is not set');
+            core.setFailed('❌ Error: github-access-token input is not set');
             return;
         }
         // Create a Slack client using the provided token
@@ -216,10 +216,10 @@ async function run() {
         const commit = buildCommit();
         const commitStatus = buildCommitStatus();
         // Determine if we should send messages
-        const sendMessageToChannelInput = core.getInput('send_message_to_channel');
+        const sendMessageToChannelInput = core.getInput('send-message-to-channel');
         const mustSendChannelMessage = sendMessageToChannelInput !== 'null' && sendMessageToChannelInput !== '';
         const slackChannelName = sendMessageToChannelInput;
-        const mustSendDirectMessage = core.getInput('send_message_to_user') === 'true';
+        const mustSendDirectMessage = core.getInput('send-message-to-user') === 'true';
         // Try to get author email from GitHub SSO if possible
         if (commit.authorUsername) {
             try {
@@ -238,10 +238,10 @@ async function run() {
             const message = buildSuccessPublishDirectMessage(commit, commitStatus);
             try {
                 const userResp = await sendMessageToUser(slackClient, commit.authorEmail, message);
-                core.info(`ℹ️ Setting output: direct_slack_message_id = ${userResp.ts}`);
-                core.setOutput('direct_slack_message_id', userResp.ts);
-                core.info(`ℹ️ Setting output: direct_slack_user_id = ${userResp.user}`);
-                core.setOutput('direct_slack_user_id', userResp.user);
+                core.info(`ℹ️ Setting output: direct-slack-message-id = ${userResp.ts}`);
+                core.setOutput('direct-slack-message-id', userResp.ts);
+                core.info(`ℹ️ Setting output: direct-slack-user-id = ${userResp.user}`);
+                core.setOutput('direct-slack-user-id', userResp.user);
             }
             catch (err) {
                 core.error('❌ Failed to send message to user.');
@@ -253,10 +253,10 @@ async function run() {
             const message = await buildFailedJobChannelMessage(slackClient, commit, commitStatus);
             try {
                 const channelResp = await sendMessageToChannel(slackClient, slackChannelName, message);
-                core.info(`ℹ️ Setting output: channel_slack_message_id = ${channelResp.ts}`);
-                core.setOutput('channel_slack_message_id', channelResp.ts);
-                core.info(`ℹ️ Setting output: channel_slack_channel_id = ${channelResp.channel}`);
-                core.setOutput('channel_slack_channel_id', channelResp.channel);
+                core.info(`ℹ️ Setting output: channel-slack-message-id = ${channelResp.ts}`);
+                core.setOutput('channel-slack-message-id', channelResp.ts);
+                core.info(`ℹ️ Setting output: channel-slack-channel-id = ${channelResp.channel}`);
+                core.setOutput('channel-slack-channel-id', channelResp.channel);
             }
             catch (err) {
                 core.error('❌ Failed to send message to channel.');

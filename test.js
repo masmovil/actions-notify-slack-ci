@@ -24,34 +24,34 @@ const originalGetInput = core.getInput;
 core.getInput = (name, options) => {
   // Map input names to environment variable names
   const envMapping = {
-    'slack_access_token': 'SLACK_ACCESS_TOKEN',
-    'github_access_token': 'GITHUB_ACCESS_TOKEN',
-    'send_message_to_channel': 'SEND_MESSAGE_TO_CHANNEL',
-    'send_message_to_user': 'SEND_MESSAGE_TO_USER',
-    'commit_url': 'COMMIT_URL',
-    'commit_author_username': 'COMMIT_AUTHOR_USERNAME',
-    'commit_author_email': 'COMMIT_AUTHOR_EMAIL',
-    'commit_message': 'COMMIT_MESSAGE',
-    'status_name': 'STATUS_NAME',
-    'status_description': 'STATUS_DESCRIPTION',
-    'status_conclusion': 'STATUS_CONCLUSION',
-    'status_url': 'STATUS_URL'
+    'slack-access-token': 'SLACK_ACCESS_TOKEN',
+    'github-access-token': 'GITHUB_ACCESS_TOKEN',
+    'send-message-to-channel': 'SEND_MESSAGE_TO_CHANNEL',
+    'send-message-to-user': 'SEND_MESSAGE_TO_USER',
+    'commit-url': 'COMMIT_URL',
+    'commit-author-username': 'COMMIT_AUTHOR_USERNAME',
+    'commit-author-email': 'COMMIT_AUTHOR_EMAIL',
+    'commit-message': 'COMMIT_MESSAGE',
+    'status-name': 'STATUS_NAME',
+    'status-description': 'STATUS_DESCRIPTION',
+    'status-conclusion': 'STATUS_CONCLUSION',
+    'status-url': 'STATUS_URL'
   };
   
   // Fallback values if .env file doesn't exist or values are missing
   const fallbackValues = {
-    'slack_access_token': 'xoxb-test-token',
-    'github_access_token': 'github-test-token',
-    'send_message_to_channel': '#test-channel',
-    'send_message_to_user': 'true',
-    'commit_url': 'https://github.com/test/repo/commit/abc123',
-    'commit_author_username': 'testuser',
-    'commit_author_email': 'test@example.com',
-    'commit_message': 'Test commit message',
-    'status_name': 'test-job',
-    'status_description': 'Test job description',
-    'status_conclusion': 'success',
-    'status_url': 'https://github.com/test/repo/actions/runs/123456'
+    'slack-access-token': 'xoxb-test-token',
+    'github-access-token': 'github-test-token',
+    'send-message-to-channel': '#test-channel',
+    'send-message-to-user': 'true',
+    'commit-url': 'https://github.com/test/repo/commit/abc123',
+    'commit-author-username': 'testuser',
+    'commit-author-email': 'test@example.com',
+    'commit-message': 'Test commit message',
+    'status-name': 'test-job',
+    'status-description': 'Test job description',
+    'status-conclusion': 'success',
+    'status-url': 'https://github.com/test/repo/actions/runs/123456'
   };
   
   const envVar = envMapping[name];

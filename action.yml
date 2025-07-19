@@ -1,51 +1,51 @@
 name: 'Slack Notify'
 description: 'Notify GitHub commit action results via Slack'
 inputs:
-  slack_access_token:
+  slack-access-token:
     description: 'Slack Bot Token (starts with xoxb-) for posting messages'
     required: true
-  github_access_token:
+  github-access-token:
     description: 'GitHub Personal Access Token for GraphQL API access'
     required: true
-  send_message_to_channel:
+  send-message-to-channel:
     description: 'Slack channel name (with #) or set to null to disable'
     required: false
-  send_message_to_user:
+  send-message-to-user:
     description: 'Set to true to send direct messages, false to disable'
     required: false
     default: 'false'
-  commit_url:
+  commit-url:
     description: 'URL to the commit'
     required: true
-  commit_author_username:
+  commit-author-username:
     description: 'GitHub username of commit author'
     required: true
-  commit_author_email:
+  commit-author-email:
     description: 'Email of commit author'
     required: true
-  commit_message:
+  commit-message:
     description: 'The commit message'
     required: true
-  status_name:
+  status-name:
     description: 'Name of the CI/CD job or check'
     required: true
-  status_description:
+  status-description:
     description: 'Description of the status'
     required: true
-  status_conclusion:
+  status-conclusion:
     description: 'Result of the status check (success, failure, error)'
     required: true
-  status_url:
+  status-url:
     description: 'URL to the CI/CD job details'
     required: true
 outputs:
-  channel_slack_message_id:
+  channel-slack-message-id:
     description: 'The Slack message timestamp (ID) of the message sent to channel'
-  channel_slack_channel_id:
+  channel-slack-channel-id:
     description: 'The Slack channel ID where the message was sent'
-  direct_slack_message_id:
+  direct-slack-message-id:
     description: 'The Slack message timestamp (ID) of the direct message sent to user'
-  direct_slack_user_id:
+  direct-slack-user-id:
     description: 'The Slack user ID who received the direct message'
 runs:
   using: 'node20'
