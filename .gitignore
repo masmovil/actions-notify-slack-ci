@@ -205,6 +205,7 @@ Thumbs.db
 
 # Project specific
 # dist/  # Commented out - we need dist/ for GitHub Actions
+main.js  # Intermediate build artifact - only track main.ts and dist/index.js
 build/
 *.js.map
 

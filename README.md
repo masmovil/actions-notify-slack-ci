@@ -1,16 +1,16 @@
 # Slack Notify GitHub Action
 
-This action is used to notify results of CI/CD jobs running on GitHub commits via Slack. It supports sending messages to both Slack channels and direct messages to users, with automatic GitHub SSO email resolution.
+This action sends Slack notifications for CI/CD job results from GitHub commits. It supports both channel and direct messages with automatic GitHub SSO email resolution and pull request detection.
 
-## Features
+## 🚀 Features
 
-- ✅ **Dual messaging**: Send notifications to Slack channels and/or direct messages to users
-- ✅ **GitHub SSO integration**: Automatically resolve GitHub usernames to SAML email addresses
-- ✅ **Smart fallback**: Falls back to commit metadata if SSO resolution fails
-- ✅ **Flexible status handling**: Supports success, failure, and unknown status states
-- ✅ **Rich formatting**: Uses emojis and Slack markdown for better readability
-- ✅ **Multiple outputs**: Provides message IDs and channel/user IDs for chaining actions
-- ✅ **Standard GitHub Actions**: Uses `with:` syntax following GitHub Actions best practices
+- **🎯 Pull Request Detection**: Automatically finds and links related pull requests from commit URLs
+- **👥 Smart User Resolution**: GitHub SSO integration with PR author fallback for reliable user identification  
+- **📢 Dual Messaging**: Send notifications to Slack channels and/or direct messages to users
+- **🔄 Intelligent Fallback**: Uses PR author when commit author SSO lookup fails
+- **🎨 Rich Formatting**: Emojis, Slack markdown, and PR context for better readability
+- **⚙️ GitHub Actions Standard**: Follows `with:` syntax and provides comprehensive outputs
+- **🔗 Contextual Links**: Includes commit, PR, and CI job links in messages
 
 ## Inputs
 
@@ -157,7 +157,9 @@ The action provides the following outputs for use in subsequent steps:
 4. Copy the Bot User OAuth Token (starts with `xoxb-`)
 
 ### 2. GitHub Access Token
-1. Create a Personal Access Token with `read:org` scope
+1. Create a Personal Access Token with these scopes:
+   - `repo` (for PR detection)
+   - `read:org` (for SSO email resolution)
 2. Store it as a repository secret
 
 ### 3. Repository Secrets
@@ -165,17 +167,22 @@ Add these secrets to your repository:
 - `SLACK_ACCESS_TOKEN`: Your Slack bot token
 - `GITHUB_ACCESS_TOKEN`: Your GitHub personal access token
 
-## Behavior
+## How It Works
 
-### GitHub SSO Resolution
-- The action attempts to resolve GitHub usernames to SAML email addresses
-- Falls back to commit metadata email if SSO resolution fails
-- Currently configured for the `masmovil` organization
+### Pull Request Detection
+- Automatically extracts commit SHA from commit URLs
+- Uses GitHub API to find pull requests associated with the commit
+- Includes PR information (number, title, author) in Slack messages
+
+### User Resolution Strategy
+1. **Primary**: Attempts GitHub SSO lookup for commit author username
+2. **Fallback**: If SSO fails, tries the same lookup for PR author username  
+3. **Final Fallback**: Uses commit author email from commit metadata
 
 ### Message Logic
-- **Direct messages**: Always use the success/failure format with status emojis
-- **Channel messages**: Use failure format with user mentions and warnings
-- **Dual messaging**: Both messages can be sent, but only the last one's outputs are available
+- **Direct messages**: Success/failure format with status emojis and PR context
+- **Channel messages**: Failure notifications with user mentions, warnings, and PR links
+- **Dual messaging**: Both messages include PR context when available
 
 ### Error Handling
 - Graceful failure for Slack API errors

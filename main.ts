@@ -35,6 +35,21 @@ interface CommitStatus {
   url: string;
 }
 
+interface PullRequest {
+  number: number;
+  title: string;
+  html_url: string;
+  head: {
+    ref: string;
+  };
+  base: {
+    ref: string;
+  };
+  user: {
+    login: string;
+  };
+}
+
 function getCommitMessageTitle(commitMessage: string): string {
   return commitMessage.split('\n')[0];
 }
@@ -45,6 +60,24 @@ function commitStatusSucceeded(conclusion: string): boolean {
 
 function commitStatusFailed(conclusion: string): boolean {
   return conclusion === 'failure' || conclusion === 'error';
+}
+
+function extractCommitShaFromUrl(commitUrl: string): string | null {
+  // Extract SHA from GitHub commit URL like: https://github.com/owner/repo/commit/abc123...
+  const match = commitUrl.match(/\/commit\/([a-f0-9]{40})/);
+  return match ? match[1] : null;
+}
+
+function extractRepoFromCommitUrl(commitUrl: string): { owner: string; repo: string } | null {
+  // Extract owner and repo from GitHub commit URL like: https://github.com/owner/repo/commit/abc123...
+  const match = commitUrl.match(/github\.com\/([^\/]+)\/([^\/]+)\/commit\//);
+  if (match) {
+    return {
+      owner: match[1],
+      repo: match[2]
+    };
+  }
+  return null;
 }
 
 async function getGithubAuthorEmail(org: string, username: string, githubToken: string): Promise<string> {
@@ -86,6 +119,54 @@ async function getGithubAuthorEmail(org: string, username: string, githubToken: 
   return edges[0].node.samlIdentity.nameId;
 }
 
+async function getPullRequestByCommit(githubToken: string, commitUrl: string, commitSha: string): Promise<PullRequest | null> {
+  try {
+    const octokit = github.getOctokit(githubToken);
+    
+    // Extract repository information from commit URL
+    const repoInfo = extractRepoFromCommitUrl(commitUrl);
+    if (!repoInfo) {
+      core.warning(`⚠️ Could not extract repository info from commit URL: ${commitUrl}`);
+      return null;
+    }
+    
+    const { owner, repo } = repoInfo;
+    
+    core.info(`ℹ️ Looking for PR containing commit ${commitSha} in ${owner}/${repo}`);
+    const { data: prs } = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+      owner,
+      repo,
+      commit_sha: commitSha,
+    });
+    
+    if (prs.length > 0) {
+      const pr = prs[0]; // Get the first (most recent) PR
+      const prAuthor = pr.user?.login || 'unknown';
+      core.info(`ℹ️ Found PR #${pr.number}: ${pr.title} by ${prAuthor}`);
+      return {
+        number: pr.number,
+        title: pr.title,
+        html_url: pr.html_url,
+        head: {
+          ref: pr.head.ref
+        },
+        base: {
+          ref: pr.base.ref
+        },
+        user: {
+          login: prAuthor
+        }
+      };
+    } else {
+      core.info(`ℹ️ No PR found for commit ${commitSha}`);
+      return null;
+    }
+  } catch (error: any) {
+    core.warning(`⚠️ Error finding PR for commit ${commitSha}: ${error.message}`);
+    return null;
+  }
+}
+
 async function buildUserMention(slackClient: WebClient, authorEmail: string, githubAuthorUsername: string): Promise<string> {
   const githubAuthorUrl = `https://github.com/${githubAuthorUsername}`;
   try {
@@ -99,14 +180,20 @@ async function buildUserMention(slackClient: WebClient, authorEmail: string, git
   return `<${githubAuthorUrl}|${githubAuthorUsername}>`;
 }
 
-async function buildFailedJobChannelMessage(slackClient: WebClient, commit: Commit, commitStatus: CommitStatus): Promise<string> {
+async function buildFailedJobChannelMessage(slackClient: WebClient, commit: Commit, commitStatus: CommitStatus, pullRequest?: PullRequest): Promise<string> {
   const userMention = await buildUserMention(slackClient, commit.authorEmail, commit.authorUsername);
   const commitTitle = getCommitMessageTitle(commit.commitMessage);
 
-  return `:warning: The commit <${commit.url}|"_${commitTitle}_"> by ${userMention} has failed the pipeline step <${commitStatus.url}|${commitStatus.name}>`;
+  let message = `:warning: The commit <${commit.url}|"_${commitTitle}_"> by ${userMention} has failed the pipeline step <${commitStatus.url}|${commitStatus.name}>`;
+  
+  if (pullRequest) {
+    message += `\n🔗 Related PR: <${pullRequest.html_url}|#${pullRequest.number} - ${pullRequest.title}>`;
+  }
+  
+  return message;
 }
 
-function buildSuccessPublishDirectMessage(commit: Commit, commitStatus: CommitStatus): string {
+function buildSuccessPublishDirectMessage(commit: Commit, commitStatus: CommitStatus, pullRequest?: PullRequest): string {
   let statusEmoji: string;
   let statusDescription: string;
 
@@ -124,7 +211,13 @@ function buildSuccessPublishDirectMessage(commit: Commit, commitStatus: CommitSt
 
   const commitTitle = getCommitMessageTitle(commit.commitMessage);
 
-  return `${statusEmoji} The CI job <${commitStatus.url}|${commitStatus.name}> for <${commit.url}|"_${commitTitle}_"> ${statusDescription}`;
+  let message = `${statusEmoji} The CI job <${commitStatus.url}|${commitStatus.name}> for <${commit.url}|"_${commitTitle}_"> ${statusDescription}`;
+  
+  if (pullRequest) {
+    message += `\n🔗 Related PR: <${pullRequest.html_url}|#${pullRequest.number} - ${pullRequest.title}>`;
+  }
+  
+  return message;
 }
 
 function buildCommit(): Commit {
@@ -238,6 +331,21 @@ async function run(): Promise<void> {
     const commit = buildCommit();
     const commitStatus = buildCommitStatus();
 
+    // Try to get pull request information for this commit
+    let pullRequest: PullRequest | null = null;
+    try {
+      // Extract commit SHA from the commit URL or use github.context.sha
+      const commitSha = github.context.sha || extractCommitShaFromUrl(commit.url);
+      if (commitSha) {
+        core.info(`ℹ️ Using commit SHA: ${commitSha}`);
+        pullRequest = await getPullRequestByCommit(githubAccessToken, commit.url, commitSha);
+      } else {
+        core.info('ℹ️ No commit SHA available - skipping PR detection');
+      }
+    } catch (err: any) {
+      core.warning(`⚠️ Failed to get PR information: ${err.message}`);
+    }
+
     // Determine if we should send messages
     const sendMessageToChannelInput = core.getInput('send-message-to-channel');
     const mustSendChannelMessage = sendMessageToChannelInput !== 'null' && sendMessageToChannelInput !== '';
@@ -251,15 +359,28 @@ async function run(): Promise<void> {
         commit.authorEmail = authorEmail;
         core.info(`ℹ️ Resolved GitHub SAML email: ${authorEmail}`);
       } catch (err: any) {
-        core.info(`ℹ️ Got error getting email from GitHub SSO: ${err.message}`);
-        // Continue with the email from commit metadata
+        core.info(`ℹ️ Got error getting email from GitHub SSO with user ${commit.authorUsername}: ${err.message}`);
+        
+        // Fallback: Try using PR author if we have a PR
+        if (pullRequest && pullRequest.user.login !== 'unknown') {
+          try {
+            core.info(`ℹ️ Trying PR author ${pullRequest.user.login} as fallback`);
+            const prAuthorEmail = await getGithubAuthorEmail('masmovil', pullRequest.user.login, githubAccessToken);
+            commit.authorEmail = prAuthorEmail;
+            commit.authorUsername = pullRequest.user.login; // Update the username too
+            core.info(`ℹ️ Resolved GitHub SAML email from PR author: ${prAuthorEmail}`);
+          } catch (prErr: any) {
+            core.info(`ℹ️ Got error getting email from PR author ${pullRequest.user.login}: ${prErr.message}`);
+            // Continue with the original email from commit metadata
+          }
+        }
       }
     }
 
     // Notify job result to Slack user via direct message
     if (mustSendDirectMessage) {
       core.info(`ℹ️ Sending message to user ${commit.authorEmail}`);
-      const message = buildSuccessPublishDirectMessage(commit, commitStatus);
+      const message = buildSuccessPublishDirectMessage(commit, commitStatus, pullRequest || undefined);
       try {
         const userResp = await sendMessageToUser(slackClient, commit.authorEmail, message);
         core.info(`ℹ️ Setting output: direct-slack-message-id = ${userResp.ts}`);
@@ -274,7 +395,7 @@ async function run(): Promise<void> {
     // Notify job result to Slack channel only if the job failed
     if (mustSendChannelMessage && slackChannelName && commitStatusFailed(commitStatus.conclusion)) {
       core.info(`ℹ️ Sending message to channel ${slackChannelName}`);
-      const message = await buildFailedJobChannelMessage(slackClient, commit, commitStatus);
+      const message = await buildFailedJobChannelMessage(slackClient, commit, commitStatus, pullRequest || undefined);
       try {
         const channelResp = await sendMessageToChannel(slackClient, slackChannelName, message);
         core.info(`ℹ️ Setting output: channel-slack-message-id = ${channelResp.ts}`);

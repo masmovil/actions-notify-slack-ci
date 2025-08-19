@@ -1,3 +1,14 @@
+/**
+ * Local testing script for the GitHub Action
+ * 
+ * This script allows you to test the action locally by:
+ * 1. Loading environment variables from .env file
+ * 2. Mocking GitHub Actions core functions
+ * 3. Mocking Slack API calls while using real GitHub API
+ * 
+ * Usage: node test.js
+ */
+
 const core = require('@actions/core');
 const fs = require('fs');
 const path = require('path');
@@ -8,8 +19,13 @@ function loadEnv() {
   if (fs.existsSync(envPath)) {
     const envContent = fs.readFileSync(envPath, 'utf8');
     envContent.split('\n').forEach(line => {
-      const [key, value] = line.split('=');
-      if (key && value) {
+      // Skip empty lines and comments
+      if (!line.trim() || line.trim().startsWith('#')) {
+        return;
+      }
+      const [key, ...valueParts] = line.split('=');
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join('='); // Handle values with = in them
         process.env[key.trim()] = value.trim();
       }
     });
@@ -44,13 +60,13 @@ core.getInput = (name, options) => {
     'github-access-token': 'github-test-token',
     'send-message-to-channel': '#test-channel',
     'send-message-to-user': 'true',
-    'commit-url': 'https://github.com/test/repo/commit/abc123',
+    'commit-url': 'https://github.com/masmovil/mm-monorepo/commit/5494d59c335d1dabc1e7fb6739b2e4b2f1aa2eff',
     'commit-author-username': 'testuser',
     'commit-author-email': 'test@example.com',
     'commit-message': 'Test commit message',
     'status-name': 'test-job',
     'status-description': 'Test job description',
-    'status-conclusion': 'success',
+    'status-conclusion': 'failure',
     'status-url': 'https://github.com/test/repo/actions/runs/123456'
   };
   
@@ -74,30 +90,55 @@ core.setOutput = (name, value) => console.log(`OUTPUT: ${name} = ${value}`);
 // Set GITHUB_OUTPUT environment variable for testing
 process.env.GITHUB_OUTPUT = '/tmp/test-output';
 
-// Mock the WebClient and fetch to avoid actual API calls
+// Mock the WebClient to avoid actual Slack API calls during testing
 const mockWebClient = {
   chat: {
-    postMessage: async () => ({ channel: 'C123456', ts: '1234567890.123456' })
+    postMessage: async (options) => {
+      console.log(`INFO: 📧 [MOCK] Slack message to ${options.channel}:`);
+      console.log(`      ${options.text.substring(0, 100)}...`);
+      return { 
+        ok: true, 
+        ts: `${Date.now() / 1000}`,
+        channel: options.channel === '#masstack-cicd-test' ? 'C0943A91UMD' : options.channel,
+        user: 'U07MOCK123' // Mock user ID
+      };
+    }
   },
   users: {
-    lookupByEmail: async () => ({ user: { id: 'U123456' } })
+    lookupByEmail: async ({ email }) => {
+      console.log(`INFO: 👤 [MOCK] Slack user lookup for: ${email}`);
+      return {
+        ok: true,
+        user: { id: 'U07MOCK123' }
+      };
+    }
   }
 };
 
-const mockFetch = async () => ({
-  json: async () => ({ data: { organization: { samlIdentityProvider: { externalIdentities: { edges: [] } } } } })
-});
+// Override the WebClient constructor more robustly
+const Module = require('module');
+const originalRequire = Module.prototype.require;
 
-// Replace imports
-const originalWebClient = require('@slack/web-api').WebClient;
-const originalFetch = require('node-fetch');
-require('@slack/web-api').WebClient = function() { return mockWebClient; };
-require.cache[require.resolve('node-fetch')].exports = mockFetch;
+Module.prototype.require = function(...args) {
+  if (args[0] === '@slack/web-api') {
+    console.log('INFO: 🔧 [MOCK] Intercepted @slack/web-api import');
+    return {
+      WebClient: function(options) {
+        console.log('INFO: 🔧 [MOCK] WebClient created with mock implementation');
+        return mockWebClient;
+      }
+    };
+  }
+  return originalRequire.apply(this, args);
+};
 
 // Run the main script
-console.log('Testing with inputs (with: syntax)...');
-console.log('Environment variables loaded from .env file (if present), with fallback values for missing ones');
+console.log('🧪 Testing GitHub Action locally...');
+console.log('📁 Environment variables loaded from .env file');
+console.log('🔗 Using REAL GitHub API and MOCK Slack API');
+console.log('🔧 WebClient mock should be active');
 console.log('');
+
 require('./main.js');
 
-console.log('Test completed successfully!');
+console.log('✅ Test completed successfully!');

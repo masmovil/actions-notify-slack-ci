@@ -1,11 +1,11 @@
-name: 'Slack Notify'
-description: 'Notify GitHub commit action results via Slack'
+name: 'Slack Notify CI'
+description: 'Notify GitHub commit and PR results via Slack with automatic PR detection and SSO user resolution'
 inputs:
   slack-access-token:
     description: 'Slack Bot Token (starts with xoxb-) for posting messages'
     required: true
   github-access-token:
-    description: 'GitHub Personal Access Token for GraphQL API access'
+    description: 'GitHub Personal Access Token (repo + read:org scopes) for PR detection and SSO resolution'
     required: true
   send-message-to-channel:
     description: 'Slack channel name (with #) or set to null to disable'
