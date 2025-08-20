@@ -158,16 +158,13 @@ async function buildUserMention(slackClient, authorEmail, githubAuthorUsername) 
     }
     return `<${githubAuthorUrl}|${githubAuthorUsername}>`;
 }
-async function buildFailedJobChannelMessage(slackClient, commit, commitStatus, pullRequest) {
+async function buildFailedJobChannelMessage(slackClient, commit, commitStatus) {
     const userMention = await buildUserMention(slackClient, commit.authorEmail, commit.authorUsername);
     const commitTitle = getCommitMessageTitle(commit.commitMessage);
     let message = `:warning: The commit <${commit.url}|"_${commitTitle}_"> by ${userMention} has failed the pipeline step <${commitStatus.url}|${commitStatus.name}>`;
-    if (pullRequest) {
-        message += `\n🔗 Related PR: <${pullRequest.html_url}|#${pullRequest.number} - ${pullRequest.title}>`;
-    }
     return message;
 }
-function buildSuccessPublishDirectMessage(commit, commitStatus, pullRequest) {
+function buildSuccessPublishDirectMessage(commit, commitStatus) {
     let statusEmoji;
     let statusDescription;
     if (commitStatusSucceeded(commitStatus.conclusion)) {
@@ -185,9 +182,6 @@ function buildSuccessPublishDirectMessage(commit, commitStatus, pullRequest) {
     }
     const commitTitle = getCommitMessageTitle(commit.commitMessage);
     let message = `${statusEmoji} The CI job <${commitStatus.url}|${commitStatus.name}> for <${commit.url}|"_${commitTitle}_"> ${statusDescription}`;
-    if (pullRequest) {
-        message += `\n🔗 Related PR: <${pullRequest.html_url}|#${pullRequest.number} - ${pullRequest.title}>`;
-    }
     return message;
 }
 function buildCommit() {
@@ -341,7 +335,7 @@ async function run() {
         // Notify job result to Slack user via direct message
         if (mustSendDirectMessage) {
             core.info(`ℹ️ Sending message to user ${commit.authorEmail}`);
-            const message = buildSuccessPublishDirectMessage(commit, commitStatus, pullRequest || undefined);
+            const message = buildSuccessPublishDirectMessage(commit, commitStatus);
             try {
                 const userResp = await sendMessageToUser(slackClient, commit.authorEmail, message);
                 core.info(`ℹ️ Setting output: direct-slack-message-id = ${userResp.ts}`);
@@ -356,7 +350,7 @@ async function run() {
         // Notify job result to Slack channel only if the job failed
         if (mustSendChannelMessage && slackChannelName && commitStatusFailed(commitStatus.conclusion)) {
             core.info(`ℹ️ Sending message to channel ${slackChannelName}`);
-            const message = await buildFailedJobChannelMessage(slackClient, commit, commitStatus, pullRequest || undefined);
+            const message = await buildFailedJobChannelMessage(slackClient, commit, commitStatus);
             try {
                 const channelResp = await sendMessageToChannel(slackClient, slackChannelName, message);
                 core.info(`ℹ️ Setting output: channel-slack-message-id = ${channelResp.ts}`);
