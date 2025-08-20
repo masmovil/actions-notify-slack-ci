@@ -323,21 +323,6 @@ async function run(): Promise<void> {
     const commit = buildCommit();
     const commitStatus = buildCommitStatus();
 
-    // Try to get pull request information for this commit
-    let pullRequest: PullRequest | null = null;
-    try {
-      // Extract commit SHA from the commit URL or use github.context.sha
-      const commitSha = github.context.sha || extractCommitShaFromUrl(commit.url);
-      if (commitSha) {
-        core.info(`ℹ️ Using commit SHA: ${commitSha}`);
-        pullRequest = await getPullRequestByCommit(githubAccessToken, commit.url, commitSha);
-      } else {
-        core.info('ℹ️ No commit SHA available - skipping PR detection');
-      }
-    } catch (err: any) {
-      core.warning(`⚠️ Failed to get PR information: ${err.message}`);
-    }
-
     // Determine if we should send messages
     const sendMessageToChannelInput = core.getInput('send-message-to-channel');
     const mustSendChannelMessage = sendMessageToChannelInput !== 'null' && sendMessageToChannelInput !== '';
@@ -353,18 +338,32 @@ async function run(): Promise<void> {
       } catch (err: any) {
         core.info(`ℹ️ Got error getting email from GitHub SSO with user ${commit.authorUsername}: ${err.message}`);
         
-        // Fallback: Try using PR author if we have a PR
-        if (pullRequest && pullRequest.user.login !== 'unknown') {
-          try {
-            core.info(`ℹ️ Trying PR author ${pullRequest.user.login} as fallback`);
-            const prAuthorEmail = await getGithubAuthorEmail('masmovil', pullRequest.user.login, githubAccessToken);
-            commit.authorEmail = prAuthorEmail;
-            commit.authorUsername = pullRequest.user.login; // Update the username too
-            core.info(`ℹ️ Resolved GitHub SAML email from PR author: ${prAuthorEmail}`);
-          } catch (prErr: any) {
-            core.info(`ℹ️ Got error getting email from PR author ${pullRequest.user.login}: ${prErr.message}`);
-            // Continue with the original email from commit metadata
+        // Fallback: Try to find PR and use PR author for SSO lookup
+        try {
+          const commitSha = github.context.sha || extractCommitShaFromUrl(commit.url);
+          if (commitSha) {
+            core.info(`ℹ️ Using commit SHA for PR fallback: ${commitSha}`);
+            const pullRequest = await getPullRequestByCommit(githubAccessToken, commit.url, commitSha);
+            
+            if (pullRequest && pullRequest.user.login !== 'unknown') {
+              try {
+                core.info(`ℹ️ Trying PR author ${pullRequest.user.login} as fallback`);
+                const prAuthorEmail = await getGithubAuthorEmail('masmovil', pullRequest.user.login, githubAccessToken);
+                commit.authorEmail = prAuthorEmail;
+                commit.authorUsername = pullRequest.user.login; // Update the username too
+                core.info(`ℹ️ Resolved GitHub SAML email from PR author: ${prAuthorEmail}`);
+              } catch (prErr: any) {
+                core.info(`ℹ️ Got error getting email from PR author ${pullRequest.user.login}: ${prErr.message}`);
+                // Continue with the original email from commit metadata
+              }
+            } else {
+              core.info('ℹ️ No valid PR author found for fallback');
+            }
+          } else {
+            core.info('ℹ️ No commit SHA available - skipping PR fallback');
           }
+        } catch (prSearchErr: any) {
+          core.warning(`⚠️ Failed to get PR information for fallback: ${prSearchErr.message}`);
         }
       }
     }
