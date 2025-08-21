@@ -340,7 +340,7 @@ async function run(): Promise<void> {
         
         // Fallback: Try to find PR and use PR author for SSO lookup
         try {
-          const commitSha = github.context.sha || extractCommitShaFromUrl(commit.url);
+          const commitSha = extractCommitShaFromUrl(commit.url);
           if (commitSha) {
             core.info(`ℹ️ Using commit SHA for PR fallback: ${commitSha}`);
             const pullRequest = await getPullRequestByCommit(githubAccessToken, commit.url, commitSha);
