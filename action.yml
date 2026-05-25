@@ -48,5 +48,5 @@ outputs:
   direct-slack-user-id:
     description: 'The Slack user ID who received the direct message'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
